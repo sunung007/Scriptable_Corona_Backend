@@ -1,3 +1,4 @@
+import os
 import requests
 import math
 from flask import Flask, request as flaskRequest
@@ -5,9 +6,7 @@ from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-app.config.from_object('config')
-
-APP_KEY = app.config['DataGoKr_APP_KEY']
+APP_KEY = os.environ.get('DataGoKr_APP_KEY')
 
 
 def get_weather(v1, v2):
