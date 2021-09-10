@@ -191,6 +191,7 @@ def api():
     return {
         'region': region,
         'covid': covid,
+        'covid_region': covid_region,
         'weather': weather,
     } if weather != 'error' else {'error': "Gofo API - Error : 데이터 로드에 실패하였습니다."}
 
