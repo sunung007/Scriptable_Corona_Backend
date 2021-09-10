@@ -1,39 +1,47 @@
+# Gofo(sunung007)
+# Scriptbale Corona 위젯을 위한 BE
+# BE URL : https://gofo-corona.herokuapp.com/
+
 import os
-import requests
 import math
-from flask import Flask, request as flaskRequest
+import csv
+import requests
 from datetime import datetime, timedelta
+from flask import Flask, request as flaskRequest
 
 
 app = Flask(__name__)
 APP_KEY = os.environ.get('DataGoKr_APP_KEY')
 
 
-def get_weather(v1, v2):
-    def get_grid(v1, v2) :
-        re = 6371.00877 / 5.0
-        DEGRAD = math.pi / 180.0
-        slat1 = 30.0  * DEGRAD
-        slat2 = 60.0 * DEGRAD
+def get_grid(v1, v2) :
+    re = 6371.00877 / 5.0
+    DEGRAD = math.pi / 180.0
+    slat1 = 30.0  * DEGRAD
+    slat2 = 60.0 * DEGRAD
 
-        sn = math.tan(math.pi * 0.25 + slat2 * 0.5) / math.tan(math.pi * 0.25 + slat1 * 0.5)
-        sn = math.log(math.cos(slat1) / math.cos(slat2)) / math.log(sn)
-        sf = math.tan(math.pi * 0.25 + slat1 * 0.5)
-        sf = math.pow(sf, sn) * math.cos(slat1) / sn
-        ro = math.tan(math.pi * 0.25 + 19.0 * DEGRAD)
-        ro = re * sf / math.pow(ro, sn);
+    sn = math.tan(math.pi * 0.25 + slat2 * 0.5) / math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sn = math.log(math.cos(slat1) / math.cos(slat2)) / math.log(sn)
+    sf = math.tan(math.pi * 0.25 + slat1 * 0.5)
+    sf = math.pow(sf, sn) * math.cos(slat1) / sn
+    ro = math.tan(math.pi * 0.25 + 19.0 * DEGRAD)
+    ro = re * sf / math.pow(ro, sn);
 
-        ra = math.tan(math.pi * 0.25 + (v1) * DEGRAD * 0.5)
-        ra = re * sf / math.pow(ra, sn)
+    ra = math.tan(math.pi * 0.25 + (v1) * DEGRAD * 0.5)
+    ra = re * sf / math.pow(ra, sn)
 
-        theta = (v2 - 126.0) * DEGRAD
-        if theta > math.pi :
-            theta -= 2.0 * math.pi
-        if theta < -math.pi :
-            theta += 2.0 * math.pi
-        theta *= sn
-        return [math.floor(ra * math.sin(theta) + 43.5),
-                math.floor(ro - ra * math.cos(theta) + 136.5)]
+    theta = (v2 - 126.0) * DEGRAD
+    if theta > math.pi :
+        theta -= 2.0 * math.pi
+    if theta < -math.pi :
+        theta += 2.0 * math.pi
+    theta *= sn
+
+    return [math.floor(ra * math.sin(theta) + 43.5),
+            math.floor(ro - ra * math.cos(theta) + 136.5)]
+
+
+def get_weather(nx, ny):
     def get_weather_info(all, weather):
         return list(filter(lambda i : i['category']==weather, all))[0]['fcstValue']
     def get_weather_icon(rain, sky, volume):
@@ -72,8 +80,6 @@ def get_weather(v1, v2):
             'cloud.moon.rain.fill'  # 13. 비 + 구름 적음
         ]
     }
-
-    [nx, ny] = get_grid(v1, v2)
 
     now = datetime.now()
     if int(str(now).split(':')[1]) < 45:
@@ -126,22 +132,67 @@ def get_covid_info(city):
     }
 
 
+def get_covid_region(city):
+    cities = {
+        '서울특별시': 0,
+        '부산광역시': 1,
+        '대구광역시': 3,
+        '인천광역시': 2,
+        '광주광역시': 4,
+        '대전광역시': 5,
+        '울산광역시': 6,
+        '세종특별자치시': 7,
+        '경기도': 8,
+        '강원도': 9,
+        '충청북도': 10,
+        '충청남도': 11,
+        '전라북도': 14,
+        '전라남도': 15,
+        '경상북도': 12,
+        '경상남도': 13,
+        '제주특별자치도': 16,
+        '이어도': 16,
+    }
+    return cities[city]
+
+
+def get_region(nx, ny):
+    loc_arr = None
+    grid = list(map(str, [nx, ny]))
+
+    with open('cities.csv', 'r', encoding='utf-8') as raw_file:
+        for line in csv.reader(raw_file):
+            if line[:2] == grid:
+                loc_arr = line[2:]
+                break
+
+    return loc_arr
+
+
 @app.route('/api', methods=['GET'])
 def api():
     params = flaskRequest.args.to_dict()
     if len(params) == 0:    # error handle
-        return "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."
+        return {'error': "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."}
     elif not('lang' in params and 'long' in params):
-        return "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."
+        return {'error': "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."}
 
     [lang, long] = list(map(float, [params['lang'], params['long']]))
+    [nx, ny] = get_grid(lang, long)
 
-    covid = get_covid_info(0)
-    weather = get_weather(lang, long)
+    if lang>43 or lang<33 or long>132 or long<124:
+        return {'error': "Gofo API - Error : 잘못된 위치 정보입니다."}
+
+    region = get_region(nx, ny)
+    covid_region = get_covid_region(region[0])
+    covid = get_covid_info(covid_region)
+    weather = get_weather(nx, ny)
+
     return {
+        'region': region,
         'covid': covid,
         'weather': weather,
-    } if weather != 'error' else ''
+    } if weather != 'error' else {'error': "Gofo API - Error : 데이터 로드에 실패하였습니다."}
 
 
 @app.route('/')
