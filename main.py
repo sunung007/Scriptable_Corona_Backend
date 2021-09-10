@@ -174,7 +174,7 @@ def api():
     params = flaskRequest.args.to_dict()
     if len(params) == 0:    # error handle
         return {'error': "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."}
-    elif not('lang' in params and 'long' in params):
+    elif not('lang' in params and 'long' in params or 'region' in params):
         return {'error': "Gofo API - Error : 잘못된 요청입니다. 파라미터를 확인해주세요."}
 
     [lang, long] = list(map(float, [params['lang'], params['long']]))
@@ -184,7 +184,8 @@ def api():
         return {'error': "Gofo API - Error : 잘못된 위치 정보입니다."}
 
     region = get_region(nx, ny)
-    covid_region = get_covid_region(region[0])
+    covid_region = int(params['region'])
+    # covid_region = get_covid_region(region[0])
     covid = get_covid_info(covid_region)
     weather = get_weather(nx, ny)
 
