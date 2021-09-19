@@ -56,7 +56,16 @@ def get_weather(nx, ny):
                 elif volume > 5: icon = 1       # 많은 비
                 else: icon = 7                  # 적은 비
         return icon
-    
+    def get_weather_icon_size(icon):
+        width = 200
+        height = 200
+        if icon == 'cloud.heavyrain.fill':
+            height = 180
+        elif icon == 'cloud.fill' or icon == 'cloud.sun.fill' or icon == 'cloud.moon.fill':
+            height = 150
+        return [width, height]
+
+
     status = {
         'sky': ['맑음', '구름조금', '구름많음', '흐림'],
         'rain': ['없음', '비', '비/눈', '눈', '소나기', '빗방울', '비/눈', '눈날림'],
@@ -112,12 +121,18 @@ def get_weather(nx, ny):
     volume = get_weather_info(data_body, 'RN1')
     icon = get_weather_icon(rain, sky, volume)
 
+    # 아이콘 크기 구하기
+    icon_size = get_weather_icon_size(icon)
+
     return {
         'code': 200,                                            # 결과 정상 코드
         'temperature': get_weather_info(data_body, 'T1H')+'℃',  # 온도
         'sky': sky_status,                                      # 하늘 상태
         'volume': volume,                                       # 강우량
-        'icon': status['icon'][icon]                            # 아이콘
+        'icon': {
+            'icon': status['icon'][icon],                       # 아이콘
+            'size': icon_size,
+        }
     }
 
 
