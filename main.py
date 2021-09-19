@@ -122,14 +122,24 @@ def get_weather(nx, ny):
 
 
 def get_covid_info(city):
+    # 어제 정보
     url = 'https://apiv2.corona-live.com/domestic-init.json'
     response = requests.get(url).json()
-    return {
+    result = {
         'city': response['citiesLive'][str(city)],      # [도시별 오늘 확진자 수, 어제 대비 증가 인원]
         'total': response['stats']['cases'],            # [전체 확진자 수, 0시 기준 확진자 수]
         'today': [response['statsLive']['today'],       # [전국 실시간 확진자 수, 어제 대비 증가 인원]
                   response['statsLive']['today']-response['statsLive']['yesterday']]
     }
+
+    # 이틀 전
+    url = 'https://apiv2.corona-live.com/cases-v2/week.json'
+    response = requests.get(url).json()
+    keys = [key for key in response]
+    keys.sort()
+    result['yesterday'] = sum(response[keys[-2]])       # 이틀 전 전국 확진자
+
+    return result
 
 
 def get_covid_region(city):
