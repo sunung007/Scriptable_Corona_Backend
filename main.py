@@ -119,7 +119,8 @@ def get_weather(nx, ny):
 
     # 하늘 상태에 따른 아이콘 구하기
     volume = get_weather_info(data_body, 'RN1')
-    icon = get_weather_icon(rain, sky, volume)
+    icon_index = get_weather_icon(rain, sky, volume)
+    icon = status['icon'][icon_index]
 
     # 아이콘 크기 구하기
     icon_size = get_weather_icon_size(icon)
@@ -130,7 +131,7 @@ def get_weather(nx, ny):
         'sky': sky_status,                                      # 하늘 상태
         'volume': volume,                                       # 강우량
         'icon': {
-            'icon': status['icon'][icon],                       # 아이콘
+            'icon': icon,                       # 아이콘
             'size': icon_size,
         }
     }
