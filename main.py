@@ -45,8 +45,6 @@ def get_weather(nx, ny):
     def get_weather_info(all, weather):
         return list(filter(lambda i : i['category']==weather, all))[0]['fcstValue']
     def get_weather_icon(rain, sky, volume):
-        if volume.find('mm') > 0:
-            volume = float(volume[:-2])
         icon = 0
         if rain == 0:                           # 맑음, 구름조금, 구름많음, 흐림(공통)
             icon = 0 if sky==3 else sky+4
@@ -58,6 +56,19 @@ def get_weather(nx, ny):
                 elif volume > 5: icon = 1       # 많은 비
                 else: icon = 7                  # 적은 비
         return icon
+    def get_weather_volume(info):
+        info = info.strip()
+        volume = 0
+        try:
+            if info == '1mm 미만':
+                volume = 0      # 맑음
+            elif info == '50mm 이상':
+                volume = 10     # 많은 비
+            else:
+                volume = 5
+        except:
+            volume = 0
+        return volume
     def get_weather_icon_size(icon):
         width = 200
         height = 200
@@ -120,7 +131,8 @@ def get_weather(nx, ny):
     sky_status = status['sky'][sky] if rain==0 else status['rain'][rain]
 
     # 하늘 상태에 따른 아이콘 구하기
-    volume = get_weather_info(data_body, 'RN1')
+    volume_str = get_weather_info(data_body, 'RN1')
+    volume = get_weather_volume(volume_str)
     icon_index = get_weather_icon(rain, sky, volume)
     icon = status['icon'][icon_index]
 
