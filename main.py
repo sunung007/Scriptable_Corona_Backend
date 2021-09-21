@@ -45,6 +45,8 @@ def get_weather(nx, ny):
     def get_weather_info(all, weather):
         return list(filter(lambda i : i['category']==weather, all))[0]['fcstValue']
     def get_weather_icon(rain, sky, volume):
+        if volume.find('mm') > 0:
+            volume = float(volume[:-2])
         icon = 0
         if rain == 0:                           # 맑음, 구름조금, 구름많음, 흐림(공통)
             icon = 0 if sky==3 else sky+4
