@@ -59,6 +59,7 @@ def get_region_coord(lat: float, lon: float, nx: int, ny: int) -> list:
     result = []
     for area in data:
         if area == 'area0': continue
-        result.append(data[area]['name'])
-
+        if data[area]['name'] != "":
+            result.append(data[area]['name'])
+    
     return result
