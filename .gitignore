@@ -1,5 +1,6 @@
 # CUSTOM
 config.py
+/.vscode
 
 # Created by https://www.toptal.com/developers/gitignore/api/macos,flask,visualstudiocode,jetbrains+all,pycharm+all,webstorm+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,flask,visualstudiocode,jetbrains+all,pycharm+all,webstorm+all

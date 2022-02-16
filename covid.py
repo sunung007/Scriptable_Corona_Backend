@@ -1,4 +1,6 @@
+import os
 import requests
+import json, xmltodict
 
 
 def get_covid_region(city: str) -> int:
@@ -42,24 +44,24 @@ def get_covid_info(city: int) -> dict:
     Returns:
         dict: 코로나 확진자 정보
     """
-    # 어제 정보
-    url = "https://apiv2.corona-live.com/domestic-init.json"
+    url = "https://apiv3.corona-live.com/domestic/live.json"
     response = requests.get(url).json()
     result = {
-        "city": response["citiesLive"][str(city)],  # [도시별 오늘 확진자 수, 어제 대비 증가 인원]
-        "total": response["stats"]["cases"],  # [전체 확진자 수, 0시 기준 확진자 수]
+        # [도시별 오늘 확진자 수, 어제 대비 증가 인원]
+        "city": response["cities"][str(city)],
+        # [전국 실시간 확진자 수, 어제 대비 증가 인원]
         "today": [
-            response["statsLive"]["today"],  # [전국 실시간 확진자 수, 어제 대비 증가 인원]
-            response["statsLive"]["today"] - response["statsLive"]["yesterday"],
+            response["live"]["today"],
+            response["live"]["today"] - response["live"]["yesterday"],
         ],
+        # [전체 확진자 수, 0시 기준 확진자 수]
+        "total": [0, 0],
         "yesterday": 0,
     }
 
     # 이틀 전
-    url = "https://apiv2.corona-live.com/cases-v2/week.json"
+    url = "https://apiv3.corona-live.com/domestic/stat.json"
     response = requests.get(url).json()
-    keys = [key for key in response]
-    keys.sort()
-    result["yesterday"] = sum(response[keys[-2]])  # 이틀 전 전국 확진자
-
+    result["total"] = response["overview"]["confirmed"]
+    # result["yesterday"] = get_covid_day()  # 이틀 전 전국 확진자
     return result
