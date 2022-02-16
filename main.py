@@ -2,8 +2,7 @@
 # Scriptbale Corona 위젯을 위한 BE
 # BE URL : https://gofo-corona.herokuapp.com/
 
-from flask import Flask, request as flaskRequest
-
+from flask import Flask, send_from_directory, request
 from weather import *
 from region import *
 from covid import *
@@ -13,7 +12,7 @@ app = Flask(__name__)
 
 @app.errorhandler(404)
 def error():
-    return {"error": "잘못된 링크입니다."}
+    return "error: 잘못된 링크입니다.", 404
 
 
 @app.route("/")
@@ -21,17 +20,26 @@ def root():
     return "Gofo API - Scriptable Corona Widget"
 
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, "static"),
+        "favicon.ico",
+        mimetype="image/v[nd.microsoft.icon",
+    )
+
+
 @app.route("/api", methods=["GET"])
 def api():
     # 파라미터
-    params = flaskRequest.args.to_dict()
+    params = request.args.to_dict()
     if len(params) == 0 or not (
         "lang" in params and "long" in params and "region" in params
     ):
         return {"error": "잘못된 요청입니다. 파라미터를 확인해주세요."}
 
     # 파라미터 정보
-    lat, lon = map(float, [params["lang"], params["long"]])
+    lat, lon = float(params["lang"]), float(params["long"])
     covid_region = int(params["region"])
 
     # Google 좌표 -> 기상청 grid

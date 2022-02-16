@@ -1,6 +1,4 @@
-import os
 import requests
-import json, xmltodict
 
 
 def get_covid_region(city: str) -> int:
@@ -45,7 +43,11 @@ def get_covid_info(city: int) -> dict:
         dict: 코로나 확진자 정보
     """
     url = "https://apiv3.corona-live.com/domestic/live.json"
-    response = requests.get(url).json()
+    response = requests.get(url)
+    if response.status_code != 200:
+        return {"error": "코로나 정보 얻기에 실패하였습니다."}
+
+    response = response.json()
     result = {
         # [도시별 오늘 확진자 수, 어제 대비 증가 인원]
         "city": response["cities"][str(city)],
@@ -54,14 +56,24 @@ def get_covid_info(city: int) -> dict:
             response["live"]["today"],
             response["live"]["today"] - response["live"]["yesterday"],
         ],
-        # [전체 확진자 수, 0시 기준 확진자 수]
         "total": [0, 0],
         "yesterday": 0,
     }
 
-    # 이틀 전
+    # [전체 확진자 수, 0시 기준 확진자 수]
     url = "https://apiv3.corona-live.com/domestic/stat.json"
-    response = requests.get(url).json()
-    result["total"] = response["overview"]["confirmed"]
-    # result["yesterday"] = get_covid_day()  # 이틀 전 전국 확진자
+    response = requests.get(url)
+    if response.status_code != 200:
+        return {"error": "코로나 정보 얻기에 실패하였습니다."}
+
+    result["total"] = response.json()["overview"]["confirmed"]
+
+    # 이틀 전 전국 확진자
+    url = "https://apiv3.corona-live.com/domestic/ts/all/90/compressed.json"
+    response = requests.get(url)
+    if response.status_code != 200:
+        return {"error": "코로나 정보 얻기에 실패하였습니다."}
+
+    result["yesterday"] = int(response.json()["data"][-2].split(",")[0])
+
     return result
